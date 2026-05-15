@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>HERMES | CV Pipeline</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/hermes.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="cyber-bg">
+        <div class="grid-overlay"></div>
+        <div class="scan-line"></div>
+        <div class="radial-glow"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-logo">HERMES</div>
+            <div class="loading-subtitle">CV PIPELINE INITIALIZING</div>
+            <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header glass">
+        <div class="header-left">
+            <div class="status-dot" id="status-dot"></div>
+            <div class="header-logo">
+                <span class="logo-text">HERMES</span>
+                <span class="logo-tag">COMPUTER VISION PIPELINE</span>
+            </div>
+        </div>
+        <div class="header-center">
+            <div class="pipeline-progress" id="pipeline-progress">
+                <div class="pip-node active" data-stage="0"><span>00</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="1"><span>01</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="2"><span>02</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="3"><span>03</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="4"><span>04</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="5"><span>05</span></div>
+                <div class="pip-line"></div>
+                <div class="pip-node" data-stage="6"><span>06</span></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="demo-mode-btn glass-subtle" id="demo-mode-btn" title="Auto-play demo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                DEMO
+            </button>
+            <div class="gpu-badge glass-subtle" id="gpu-badge">
+                <span class="gpu-label" id="gpu-label">GPU</span>
+                <div class="gpu-bar"><div class="gpu-fill" id="gpu-fill"></div></div>
+                <span class="gpu-pct" id="gpu-pct">--%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Shell -->
+    <div class="app-shell">
+        <!-- Left Sidebar - Mission Phases -->
+        <nav class="sidebar glass" id="sidebar">
+            <div class="sidebar-title">MISSION PHASES</div>
+            <button class="phase-btn active" data-stage="0">
+                <div class="phase-num">00</div>
+                <div class="phase-info">
+                    <div class="phase-name">DATA SOURCE</div>
+                    <div class="phase-desc">Source selection</div>
+                </div>
+            </button>
+            <button class="phase-btn" data-stage="1">
+                <div class="phase-num">01</div>
+                <div class="phase-info">
+                    <div class="phase-name">DATA COLLECTION</div>
+                    <div class="phase-desc">Dataset acquisition</div>
+                </div>
+            </button>
+            <button class="phase-btn locked" data-stage="2">
+                <div class="phase-num">02</div>
+                <div class="phase-info">
+                    <div class="phase-name">ANNOTATION</div>
+                    <div class="phase-desc">Object annotation</div>
+                </div>
+            </button>
+            <button class="phase-btn locked" data-stage="3">
+                <div class="phase-num">03</div>
+                <div class="phase-info">
+                    <div class="phase-name">AUGMENTATION</div>
+                    <div class="phase-desc">Augmentation</div>
+                </div>
+            </button>
+            <button class="phase-btn locked" data-stage="4">
+                <div class="phase-num">04</div>
+                <div class="phase-info">
+                    <div class="phase-name">QUALITY ASSURANCE</div>
+                    <div class="phase-desc">Dataset analysis</div>
+                </div>
+            </button>
+            <button class="phase-btn locked" data-stage="5">
+                <div class="phase-num">05</div>
+                <div class="phase-info">
+                    <div class="phase-name">MODEL TRAINING</div>
+                    <div class="phase-desc">YOLO detection</div>
+                </div>
+            </button>
+            <button class="phase-btn locked" data-stage="6">
+                <div class="phase-num">06</div>
+                <div class="phase-info">
+                    <div class="phase-name">MODEL TESTING</div>
+                    <div class="phase-desc">Visualization</div>
+                </div>
+            </button>
+        </nav>
+
+        <!-- Center Workspace -->
+        <main class="workspace" id="workspace">
+            <!-- Stage 0: Data Source Selection -->
+            <section class="stage-panel active" id="stage-0" data-stage="0">
+                <div class="stage-header">
+                    <h2 class="stage-title">DATA SOURCE</h2>
+                    <p class="stage-subtitle">Choose how to acquire training data for your detection model. Capture satellite imagery from anywhere on Earth, or select from pre-built training datasets.</p>
+                </div>
+
+                <!-- Source Selector (default view) -->
+                <div class="source-selector" id="source-selector">
+                    <div class="source-card" id="source-geo">
+                        <div class="source-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M2 12h20"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
+                        <div class="source-title">GEO CAPTURE</div>
+                        <div class="source-desc">Browse satellite imagery, draw a capture region, and extract tiles into a training dataset. Supports zoom levels Z15&ndash;Z19 with 4.77m to 0.30m ground resolution.</div>
+                        <div class="source-tags">
+                            <span class="source-tag">Esri World Imagery</span>
+                            <span class="source-tag">Custom Regions</span>
+                            <span class="source-tag">Any Location</span>
+                        </div>
+                    </div>
+                    <div class="source-card" id="source-datasets">
+                        <div class="source-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <rect x="2" y="2" width="8" height="8" rx="1"/>
+                                <rect x="14" y="2" width="8" height="8" rx="1"/>
+                                <rect x="2" y="14" width="8" height="8" rx="1"/>
+                                <rect x="14" y="14" width="8" height="8" rx="1"/>
+                            </svg>
+                        </div>
+                        <div class="source-title">TRAINING DATASETS</div>
+                        <div class="source-desc">Choose from pre-built datasets across multiple domains or upload your own images as a ZIP archive. Pre-labeled datasets can skip directly to augmentation or training.</div>
+                        <div class="source-tags">
+                            <span class="source-tag">10+ Datasets</span>
+                            <span class="source-tag">Pre-labeled</span>
+                            <span class="source-tag">Custom Upload</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satellite Sub-view (hidden until GEO CAPTURE selected) -->
+                <div class="satellite-workspace" id="satellite-view" style="display: none">
+                    <div class="satellite-map-container">
+                        <div id="satellite-map"></div>
+                        <div class="sat-map-controls glass-subtle">
+                            <button class="btn-accent" id="btn-draw-region">DRAW CAPTURE REGION</button>
+                            <button class="btn-small btn-secondary" id="btn-clear-region">CLEAR</button>
+                        </div>
+                    </div>
+                    <div class="sat-controls glass-subtle">
+                        <div class="controls-section">
+                            <div class="section-title">CAPTURE ZOOM</div>
+                            <div class="sat-zoom-selector">
+                                <button class="sat-zoom-btn" data-zoom="15">Z15</button>
+                                <button class="sat-zoom-btn" data-zoom="16">Z16</button>
+                                <button class="sat-zoom-btn" data-zoom="17">Z17</button>
+                                <button class="sat-zoom-btn active" data-zoom="18">Z18</button>
+                                <button class="sat-zoom-btn" data-zoom="19">Z19</button>
+                            </div>
+                            <div class="sat-resolution-info">
+                                <span class="sat-res-label">RESOLUTION:</span>
+                                <span id="sat-resolution" class="sat-res-value">0.60m/px</span>
+                            </div>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">OUTPUT TILE SIZE</div>
+                            <select id="sat-tile-size" class="sat-select">
+                                <option value="256">256 px</option>
+                                <option value="512">512 px</option>
+                                <option value="640" selected>640 px</option>
+                                <option value="1024">1024 px</option>
+                            </select>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">OVERLAP</div>
+                            <div class="sat-slider-row">
+                                <input type="range" id="sat-overlap" class="sat-slider" min="0" max="50" step="5" value="0">
+                                <span id="sat-overlap-value" class="sat-slider-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">DATASET NAME</div>
+                            <input type="text" id="sat-dataset-name" class="sat-input" value="Satellite Capture" placeholder="Dataset name...">
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">QUICK LOCATIONS</div>
+                            <div class="sat-locations">
+                                <button class="sat-location-btn" data-lat="37.7749" data-lng="-122.4194" data-zoom="17">San Francisco</button>
+                                <button class="sat-location-btn" data-lat="36.0544" data-lng="-112.1401" data-zoom="16">Grand Canyon</button>
+                                <button class="sat-location-btn" data-lat="25.276987" data-lng="55.296249" data-zoom="17">Dubai</button>
+                                <button class="sat-location-btn" data-lat="40.6892" data-lng="-74.0445" data-zoom="18">Statue of Liberty</button>
+                            </div>
+                        </div>
+                        <div class="sat-region-list" id="sat-region-list" style="display: none">
+                            <div class="section-title">CAPTURE REGIONS</div>
+                            <div id="sat-region-items"></div>
+                        </div>
+                        <div class="sat-capture-info" id="sat-capture-info" style="display: none">
+                            <div class="section-title">CAPTURE ESTIMATE</div>
+                            <div class="sat-stat-row"><span>REGIONS:</span><span id="sat-region-count">0</span></div>
+                            <div class="sat-stat-row"><span>RAW TILES:</span><span id="sat-raw-tile-count">--</span></div>
+                            <div class="sat-stat-row"><span>OUTPUT TILES:</span><span id="sat-tile-count">--</span></div>
+                            <div class="sat-stat-row"><span>AREA:</span><span id="sat-area">--</span></div>
+                            <div class="sat-limit-warning" id="sat-limit-warning" style="display: none"></div>
+                        </div>
+                        <button class="btn-primary btn-full" id="btn-extract-tiles" disabled>EXTRACT DATASET</button>
+                        <button class="btn-accent btn-full" id="btn-append-tiles" style="display: none">ADD TO DATASET</button>
+                        <div class="sat-progress" id="sat-progress" style="display: none">
+                            <div class="sat-progress-bar">
+                                <div class="sat-progress-fill" id="sat-progress-fill"></div>
+                            </div>
+                            <div class="sat-progress-text" id="sat-progress-text">Downloading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage actions change based on sub-view -->
+                <div class="stage-actions" id="stage-0-actions-selector">
+                    <!-- No actions needed on selector - cards navigate directly -->
+                </div>
+                <div class="stage-actions" id="stage-0-actions-satellite" style="display: none">
+                    <button class="btn-secondary" id="btn-back-to-selector">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                        BACK
+                    </button>
+                    <button class="btn-primary" id="btn-next-0" disabled>
+                        PROCEED TO ANNOTATION
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Stage 1: Data Collection -->
+            <section class="stage-panel" id="stage-1" data-stage="1">
+                <div class="stage-header">
+                    <h2 class="stage-title">DATA COLLECTION</h2>
+                    <p class="stage-subtitle">Choose a pre-built dataset from the gallery or upload your own images as a ZIP archive. Each dataset contains images and optional YOLO-format bounding box annotations. Pre-labeled datasets can skip directly to augmentation or training.</p>
+                </div>
+                <div class="dataset-grid" id="dataset-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="upload-zone glass-subtle" id="upload-zone">
+                    <div class="upload-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text">Drop ZIP of images here or click to upload</div>
+                    <div class="upload-hint">Supports .jpg, .png, .webp (max 200MB)</div>
+                    <input type="file" id="file-input" accept=".zip,.jpg,.jpeg,.png,.webp" style="display:none">
+                </div>
+                <div class="stage-actions">
+                    <button class="btn-secondary" id="btn-prev-1">BACK</button>
+                    <button class="btn-primary" id="btn-next-1" disabled>
+                        PROCEED TO ANNOTATION
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Stage 2: Annotation -->
+            <section class="stage-panel" id="stage-2" data-stage="2">
+                <div class="stage-header">
+                    <h2 class="stage-title">ANNOTATION</h2>
+                    <p class="stage-subtitle">Click and drag on the canvas to draw bounding boxes around objects. Select a class from the palette on the right, then draw boxes on each image. Right-click a box to delete it. Use AUTO-LABEL to run a pre-trained YOLO model for automatic annotation, then refine manually.</p>
+                </div>
+                <div class="labeling-workspace">
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="label-canvas"></canvas>
+                        <div class="canvas-instructions" id="canvas-instructions">
+                            Select an image from the navigator below to begin labeling
+                        </div>
+                    </div>
+                    <div class="label-controls glass-subtle">
+                        <div class="controls-section">
+                            <div class="section-title">CLASSES</div>
+                            <div class="class-palette" id="class-palette">
+                                <!-- Populated by JS -->
+                            </div>
+                            <button class="btn-small btn-secondary" id="btn-add-class">+ Add Class</button>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">IMAGE LABELS</div>
+                            <div class="label-list" id="label-list"></div>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">ACTIONS</div>
+                            <button class="btn-small btn-accent" id="btn-auto-label">AUTO-LABEL</button>
+                            <button class="btn-small btn-secondary" id="btn-save-labels">SAVE LABELS</button>
+                        </div>
+                        <div class="label-stats" id="label-stats">
+                            <div class="stat-row"><span>Images:</span><span id="stat-labeled">0 / 0</span></div>
+                            <div class="stat-row"><span>Boxes:</span><span id="stat-boxes">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="image-nav-bar">
+                    <button class="nav-arrow" id="nav-prev" title="Previous image (Left arrow)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="image-navigator" id="image-navigator">
+                        <!-- Thumbnail strip populated by JS -->
+                    </div>
+                    <button class="nav-arrow" id="nav-next" title="Next image (Right arrow)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                    <div class="nav-counter" id="nav-counter">0 / 0</div>
+                </div>
+                <div class="stage-actions">
+                    <button class="btn-secondary" id="btn-prev-2">BACK</button>
+                    <button class="btn-primary" id="btn-next-2" disabled>PROCEED TO AUGMENTATION</button>
+                </div>
+            </section>
+
+            <!-- Stage 3: Data Multiplication -->
+            <section class="stage-panel" id="stage-3" data-stage="3">
+                <div class="stage-header">
+                    <h2 class="stage-title">AUGMENTATION</h2>
+                    <p class="stage-subtitle">Expand your dataset using Albumentations transforms. Toggle augmentations like flip, blur, rain, fog, and color jitter, then choose a multiplier (2x-5x). Each augmentation is bounding-box-aware &mdash; annotations transform with the image. Click GENERATE to apply across the full dataset.</p>
+                </div>
+                <div class="augmentation-workspace">
+                    <div class="aug-preview-grid" id="aug-preview-grid">
+                        <div class="aug-center" id="aug-center">
+                            <div class="aug-label">ORIGINAL</div>
+                            <img id="aug-original" alt="Original">
+                        </div>
+                        <!-- Augmented variants populated by JS -->
+                    </div>
+                    <div class="aug-controls glass-subtle">
+                        <div class="section-title">AUGMENTATIONS</div>
+                        <div class="aug-toggles" id="aug-toggles">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div class="section-title">MULTIPLIER</div>
+                        <div class="multiplier-selector" id="multiplier-selector">
+                            <button class="mult-btn" data-mult="2">2x</button>
+                            <button class="mult-btn active" data-mult="3">3x</button>
+                            <button class="mult-btn" data-mult="4">4x</button>
+                            <button class="mult-btn" data-mult="5">5x</button>
+                        </div>
+                        <div class="aug-counter" id="aug-counter">
+                            <span class="count-from">0</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            <span class="count-to">0</span>
+                        </div>
+                        <button class="btn-primary btn-full" id="btn-generate">GENERATE DATASET</button>
+                    </div>
+                </div>
+                <div class="stage-actions">
+                    <button class="btn-secondary" id="btn-prev-3">BACK</button>
+                    <button class="btn-primary" id="btn-next-3">PROCEED TO QA</button>
+                </div>
+            </section>
+
+            <!-- Stage 4: Quality Assurance -->
+            <section class="stage-panel" id="stage-4" data-stage="4">
+                <div class="stage-header">
+                    <h2 class="stage-title">QUALITY ASSURANCE</h2>
+                    <p class="stage-subtitle">Review dataset statistics before training. The class distribution chart reveals class imbalance, while the sample grid shows random images with their bounding box overlays for visual verification. A balanced dataset with consistent annotations produces better detection models.</p>
+                </div>
+                <div class="qa-workspace">
+                    <div class="qa-stats-row" id="qa-stats-row">
+                        <div class="qa-stat glass-subtle">
+                            <div class="qa-stat-value" id="qa-images">--</div>
+                            <div class="qa-stat-label">IMAGES</div>
+                        </div>
+                        <div class="qa-stat glass-subtle">
+                            <div class="qa-stat-value" id="qa-labels">--</div>
+                            <div class="qa-stat-label">LABELS</div>
+                        </div>
+                        <div class="qa-stat glass-subtle">
+                            <div class="qa-stat-value" id="qa-avg">--</div>
+                            <div class="qa-stat-label">AVG/IMAGE</div>
+                        </div>
+                        <div class="qa-stat glass-subtle">
+                            <div class="qa-stat-value" id="qa-balance">--</div>
+                            <div class="qa-stat-label">BALANCE</div>
+                        </div>
+                    </div>
+                    <div class="qa-charts">
+                        <div class="qa-chart-container glass-subtle">
+                            <div class="section-title">CLASS DISTRIBUTION</div>
+                            <canvas id="chart-distribution"></canvas>
+                        </div>
+                        <div class="qa-samples-container glass-subtle">
+                            <div class="qa-samples-header">
+                                <div class="section-title">SAMPLE REVIEW</div>
+                                <span class="qa-filter-badge" id="qa-filter-badge" style="display:none"></span>
+                                <button class="btn-shuffle" id="btn-shuffle-samples" title="Shuffle samples">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                                </button>
+                            </div>
+                            <div class="qa-sample-grid" id="qa-sample-grid">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stage-actions">
+                    <button class="btn-secondary" id="btn-prev-4">BACK</button>
+                    <button class="btn-primary" id="btn-next-4">COMMENCE TRAINING</button>
+                </div>
+            </section>
+
+            <!-- Stage 5: Model Training -->
+            <section class="stage-panel" id="stage-5" data-stage="5">
+                <div class="stage-header">
+                    <h2 class="stage-title">MODEL TRAINING</h2>
+                    <p class="stage-subtitle">Train a YOLO11 object detection model on the NVIDIA GB10 GPU. Choose model size (Nano for speed, Small for accuracy), set epochs and batch size, then launch training. Loss curves and mAP metrics update live via WebSocket as the model learns.</p>
+                </div>
+                <!-- Pre-training config -->
+                <div class="training-config" id="training-config">
+                    <div class="config-grid">
+                        <div class="config-card glass-subtle">
+                            <div class="section-title">MODEL</div>
+                            <div class="model-selector" id="model-selector">
+                                <button class="model-btn active" data-model="yolo11n">
+                                    <div class="model-name">YOLO11n</div>
+                                    <div class="model-desc">Nano - Fast</div>
+                                </button>
+                                <button class="model-btn" data-model="yolo11s">
+                                    <div class="model-name">YOLO11s</div>
+                                    <div class="model-desc">Small - Balanced</div>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="config-card glass-subtle">
+                            <div class="section-title">EPOCHS</div>
+                            <input type="range" id="epochs-slider" min="10" max="200" value="50" class="cyber-range">
+                            <div class="range-value" id="epochs-value">50</div>
+                        </div>
+                        <div class="config-card glass-subtle">
+                            <div class="section-title">IMAGE SIZE</div>
+                            <div class="size-selector" id="size-selector">
+                                <button class="size-btn" data-size="320">320</button>
+                                <button class="size-btn active" data-size="640">640</button>
+                            </div>
+                        </div>
+                        <div class="config-card glass-subtle">
+                            <div class="section-title">BATCH SIZE</div>
+                            <div class="batch-selector" id="batch-selector">
+                                <button class="batch-btn" data-batch="8">8</button>
+                                <button class="batch-btn active" data-batch="16">16</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-large" id="btn-start-training">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                        COMMENCE TRAINING
+                    </button>
+                </div>
+                <!-- Live training dashboard -->
+                <div class="training-dashboard" id="training-dashboard" style="display:none">
+                    <div class="training-progress-bar">
+                        <div class="training-progress-fill" id="training-progress-fill"></div>
+                        <div class="training-progress-text" id="training-progress-text">0%</div>
+                    </div>
+                    <div class="training-stats-row">
+                        <div class="train-stat glass-subtle">
+                            <div class="train-stat-label">EPOCH</div>
+                            <div class="train-stat-value" id="train-epoch">0 / 0</div>
+                        </div>
+                        <div class="train-stat glass-subtle">
+                            <div class="train-stat-label">mAP@50</div>
+                            <div class="train-stat-value accent" id="train-map50">0.000</div>
+                        </div>
+                        <div class="train-stat glass-subtle">
+                            <div class="train-stat-label">mAP@50-95</div>
+                            <div class="train-stat-value" id="train-map95">0.000</div>
+                        </div>
+                        <div class="train-stat glass-subtle">
+                            <div class="train-stat-label">ETA</div>
+                            <div class="train-stat-value" id="train-eta">--:--</div>
+                        </div>
+                    </div>
+                    <div class="training-charts">
+                        <div class="chart-panel glass-subtle">
+                            <div class="section-title">LOSS CURVES</div>
+                            <canvas id="chart-loss"></canvas>
+                        </div>
+                        <div class="chart-panel glass-subtle">
+                            <div class="section-title">mAP PROGRESS</div>
+                            <canvas id="chart-map"></canvas>
+                        </div>
+                    </div>
+                    <div class="training-actions" id="training-actions" style="display:none">
+                        <button class="btn-secondary" id="btn-retrain">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            NEW TRAINING RUN
+                        </button>
+                        <button class="btn-ghost" id="btn-clear-training">CLEAR RESULTS</button>
+                    </div>
+                </div>
+                <div class="stage-actions">
+                    <button class="btn-secondary" id="btn-prev-5">BACK</button>
+                    <button class="btn-primary" id="btn-next-5" disabled>PROCEED TO TESTING</button>
+                </div>
+            </section>
+
+            <!-- Stage 6: Model Testing -->
+            <section class="stage-panel" id="stage-6" data-stage="6">
+                <div class="stage-header">
+                    <h2 class="stage-title">MODEL TESTING</h2>
+                    <p class="stage-subtitle">Test your trained model on images it has never seen before. Upload any image from the web or your device to validate the model generalizes beyond training data. Switch between annotation styles, adjust the confidence threshold, and export your trained model for deployment.</p>
+                </div>
+                <div class="assessment-workspace">
+                    <div class="detect-result-container" id="detect-result-container">
+                        <div class="detect-placeholder" id="detect-placeholder">
+                            Select an image and run detection to see results
+                        </div>
+                        <img id="detect-result-img" class="detect-result-img" style="display:none" alt="Detection result">
+                    </div>
+                    <div class="detect-controls glass-subtle">
+                        <div class="controls-section">
+                            <div class="section-title">ANNOTATOR STYLE</div>
+                            <div class="style-selector" id="style-selector">
+                                <button class="style-btn active" data-style="box_corner">CORNER</button>
+                                <button class="style-btn" data-style="box">BOX</button>
+                                <button class="style-btn" data-style="heatmap">HEATMAP</button>
+                                <button class="style-btn" data-style="circle">CIRCLE</button>
+                            </div>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">CONFIDENCE</div>
+                            <input type="range" id="confidence-slider" min="10" max="90" value="25" class="cyber-range">
+                            <div class="range-value" id="confidence-value">0.25</div>
+                        </div>
+                        <div class="controls-section">
+                            <div class="section-title">RESULTS</div>
+                            <div class="detect-stats" id="detect-stats">
+                                <div class="stat-row"><span>Detections:</span><span id="detect-count">--</span></div>
+                                <div class="stat-row"><span>Inference:</span><span id="detect-time">--</span></div>
+                            </div>
+                            <div class="class-breakdown" id="class-breakdown"></div>
+                        </div>
+                        <button class="btn-primary btn-full" id="btn-run-detect">RUN DETECTION</button>
+                        <div class="controls-section">
+                            <div class="section-title">EXPORT</div>
+                            <button class="btn-secondary btn-full" id="btn-export-model">DOWNLOAD MODEL</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="detect-nav-bar">
+                    <div class="detect-nav-section">
+                        <div class="section-title">DATASET IMAGES</div>
+                        <div class="detect-image-nav" id="detect-image-nav"></div>
+                    </div>
+                    <div class="detect-upload-section">
+                        <label class="upload-test-btn" id="upload-test-label">
+                            <input type="file" id="upload-test-input" accept="image/*" multiple hidden>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            UPLOAD TEST IMAGE
+                        </label>
+                        <div class="detect-image-nav" id="detect-uploaded-nav"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Metrics Panel -->
+        <aside class="metrics-panel glass" id="metrics-panel">
+            <div class="metrics-title">PIPELINE STATUS</div>
+            <div class="metric-item">
+                <div class="metric-label">DATASET</div>
+                <div class="metric-value" id="metric-dataset">--</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">IMAGES</div>
+                <div class="metric-value" id="metric-images">--</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">LABELS</div>
+                <div class="metric-value" id="metric-labels">--</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">CLASSES</div>
+                <div class="metric-value" id="metric-classes">--</div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <div class="metric-label">AUGMENTED</div>
+                <div class="metric-value" id="metric-augmented">--</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">MODEL</div>
+                <div class="metric-value" id="metric-model">--</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">mAP@50</div>
+                <div class="metric-value accent" id="metric-map">--</div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <div class="metric-label">PHASE</div>
+                <div class="metric-value" id="metric-phase">1 / 6</div>
+            </div>
+            <div class="pipeline-mini" id="pipeline-mini">
+                <div class="mini-stage active"></div>
+                <div class="mini-stage"></div>
+                <div class="mini-stage"></div>
+                <div class="mini-stage"></div>
+                <div class="mini-stage"></div>
+                <div class="mini-stage"></div>
+                <div class="mini-stage"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="vendor/chart.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/satellite.js"></script>
+    <script src="js/collection.js"></script>
+    <script src="js/labeling.js"></script>
+    <script src="js/augmentation.js"></script>
+    <script src="js/quality.js"></script>
+    <script src="js/training.js"></script>
+    <script src="js/assessment.js"></script>
+    <script src="js/demo-mode.js"></script>
+    <script src="/shared/demo-guide.js" data-demo-id="hermes"></script>
+</body>
+</html>

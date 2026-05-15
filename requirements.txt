@@ -1,0 +1,12 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+redis>=5.0
+python-multipart>=0.0.9
+aiofiles>=24.1
+httpx
+numpy
+opencv-python-headless>=4.9
+ultralytics>=8.3
+albumentations>=1.4
+supervision>=0.25
+Pillow>=10.0
