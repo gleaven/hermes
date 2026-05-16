@@ -500,3 +500,44 @@ to stay polite.
 ## Credits
 
 Built by Andrew Meinecke.
+
+## Components & Licensing
+
+This demo is released under Apache License 2.0. It bundles the
+following third-party components, each retaining its own license:
+
+| Component | License | Use in this demo |
+|---|---|---|
+| [PyTorch](https://github.com/pytorch/pytorch) 2.9.1 + torchvision | BSD-3 | GPU autodiff for YOLO training and inference |
+| [**Ultralytics YOLO11**](https://github.com/ultralytics/ultralytics) | **AGPL-3.0** | Training engine and pre-trained `yolo11n.pt` / `yolo11s.pt` weights |
+| [Albumentations](https://github.com/albumentations-team/albumentations) | MIT | Bbox-aware augmentation pipeline (rain, fog, blur, flip, rotate, brightness, color jitter, noise, cutout) |
+| [Supervision](https://github.com/roboflow/supervision) (Roboflow) | MIT | Detection-result annotation (corner / box / heatmap / circle) |
+| [OpenCV (`opencv-python-headless`)](https://github.com/opencv/opencv-python) | Apache 2.0 | Image I/O and tile manipulation |
+| [Pillow](https://github.com/python-pillow/Pillow) | HPND (MIT-style) | Image manipulation |
+| [NumPy](https://github.com/numpy/numpy) | BSD-3 | Numerical work across stages |
+| [FastAPI](https://github.com/fastapi/fastapi) | MIT | HTTP + WebSocket server |
+| [Redis](https://github.com/redis/redis) (bundled `redis:7-alpine`) | RSALv2 / SSPLv1 (dual) | Job-state persistence |
+| [NVIDIA CUDA base image](https://hub.docker.com/r/nvidia/cuda) | NVIDIA Deep Learning Container Software License | GPU runtime |
+| [Esri World Imagery](https://www.esri.com/) (fetched at runtime by Stage 1's GEO CAPTURE) | Esri Master Agreement / TOS | Satellite tiles for training imagery |
+| [Roboflow Universe](https://universe.roboflow.com/) sample datasets (downloaded by `scripts/download_gallery.py`) | CC BY 4.0 (per-dataset) | Pre-built training datasets in the gallery |
+
+### License notes
+
+- **Ultralytics YOLO11 is AGPL-3.0.** Network-reachable users of an
+  AGPL-licensed work are entitled to corresponding source under
+  AGPL §13. Hermes itself is Apache 2.0 and imports Ultralytics as a
+  library — that combination is permitted under AGPL, but if you
+  modify Ultralytics or build a derivative work, the AGPL applies to
+  the modified portion. For closed-source or commercial deployments
+  Ultralytics sells an Enterprise License — see
+  <https://www.ultralytics.com/license>.
+- **YOLO11 pre-trained weights** (`yolo11n.pt`, `yolo11s.pt`,
+  `yolo11n-vehicles.pt` if you place one in `data/pretrained/`) are
+  distributed under the same AGPL-3.0 license as the Ultralytics
+  package itself.
+- **Esri World Imagery** is subject to Esri's Terms of Service.
+  It is licensed for development and demonstration; redistribution of
+  the raw tiles is not granted. Models trained on these tiles are
+  generally fine — but read the TOS for your deployment context.
+- Redis 7.4+ uses the dual RSALv2 / SSPLv1 license; the RSALv2 path
+  covers normal use.
